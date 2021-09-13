@@ -1,5 +1,5 @@
 #########################################
-Artic Pipleline Graphical User Interface
+Artic Pipeline Graphical User Interface
 #########################################
 
 To begin, activate your artic conda environment in your terminal by typing 'conda activate artic'.
