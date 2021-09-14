@@ -46,6 +46,12 @@ def input_data(button):
     for val in filenames:
         filename_selection.insert(tk.END, val)
 
+def select_all():
+    filename_selection.select_set(0, END)
+
+def deselect_all():
+    filename_selection.selection_clear(0, END)
+
 #Open File Explorer to select output folder path
 def output_data(button):
     global output_data_directory
@@ -184,6 +190,13 @@ def light_mode():
     outputDataPath["bg"], outputDataPath["fg"] = "white", "black"
     barcodePath["bg"], barcodePath["fg"] = "white", "black"
     thread_entry["bg"], thread_entry["fg"] ="white", "black"
+    input_button["bg"],input_button["fg"] = "white", "black"
+    select_button["bg"],select_button["fg"] = "white", "black"
+    deselect_button["bg"],deselect_button["fg"] = "white", "black"
+    output_button["bg"],output_button["fg"] = "white", "black"
+    barcode_button["bg"],barcode_button["fg"] = "white", "black"
+    run_button["bg"],run_button["fg"] = "white", "black"
+    statusbar["bg"],statusbar["fg"] = "white", "black"
 
 def dark_mode():
     backgroundLabel["bg"] = "#404040"
@@ -204,6 +217,13 @@ def dark_mode():
     outputDataPath["bg"], outputDataPath["fg"] = "#3B3B3B", "white"
     barcodePath["bg"], barcodePath["fg"] = "#3B3B3B", "white"
     thread_entry["bg"], thread_entry["fg"] = "#3B3B3B", "white"
+    input_button["bg"],input_button["fg"] = "#3B3B3B", "white"
+    select_button["bg"],select_button["fg"] = "#3B3B3B", "white"
+    deselect_button["bg"],deselect_button["fg"] = "#3B3B3B", "white"
+    output_button["bg"],output_button["fg"] = "#3B3B3B", "white"
+    barcode_button["bg"],barcode_button["fg"] = "#3B3B3B", "white"
+    run_button["bg"],run_button["fg"] = "#3B3B3B", "white"
+    statusbar["bg"],statusbar["fg"] = "#3B3B3B", "white"
 
 def open_help():
     subprocess.Popen(["notepad.exe", "README.md"])
@@ -270,14 +290,30 @@ inputDataPath.bind("<Return>",func=lambda e: input_data(button=False))
 #Browse button for input folder path
 input_button = tk.Button(window,text='...',bg="white",command=lambda:input_data(button=True))
 input_button.place(x=740, y=200,width = 30, height = 30)
-changeOnHover(input_button, "#D9F2FF", "white", True)
+#changeOnHover(input_button, "#D9F2FF", "white", True)
 
 filenameselectionLabel = tk.Label(window, text="Select Folders to Remove from List",font=('Verdana',14),bg="white")
-filenameselectionLabel.place(x=30, y=290) 
+filenameselectionLabel.place(x=30, y=260) 
+
+listboxFrame = tk.Frame(window,bg="white")
+listboxFrame.place(x=380,y=260)
+
+scrollbar = Scrollbar(listboxFrame)
+scrollbar.pack(side = RIGHT, fill = BOTH)
 
 #Listbox for selection of folders to remove from list of folders to be processed
-filename_selection = tk.Listbox(window, selectmode=tk.MULTIPLE, height=4,width=29,font=('Verdana',14),highlightcolor="#2696FF",selectbackground="#2696FF")
-filename_selection.place(x=380, y=260)
+filename_selection = tk.Listbox(listboxFrame, selectmode=tk.MULTIPLE, height=4,width=29,font=('Verdana',14),highlightcolor="#2696FF",selectbackground="#2696FF", yscrollcommand = scrollbar.set)
+filename_selection.pack()
+
+scrollbar.config(command = filename_selection.yview)
+
+select_button = tk.Button(window, text='Select All', font=('Verdana',12), bg="white", command=lambda:select_all())
+select_button.place(x=30,y=310)
+#changeOnHover(select_button, "#D9F2FF", "white", True)
+
+deselect_button = tk.Button(window, text='Deselect All', font=('Verdana',12), bg="white", command=lambda:deselect_all())
+deselect_button.place(x=150,y=310)
+#changeOnHover(deselect_button, "#D9F2FF", "white", True)
 
 outputLabel = tk.Label(window, text="Output Data Path",font=('Verdana',14),bg="white")
 outputLabel.place(x=30, y=380)
@@ -291,7 +327,7 @@ outputDataPath.bind("<Return>",func=lambda e: output_data(button=False))
 #Browse button for output folder path
 output_button = tk.Button(window,text='...',bg="white",command=lambda:output_data(button=True))
 output_button.place(x=740, y=420, width = 30, height = 30)
-changeOnHover(output_button, "#D9F2FF", "white", True)
+#changeOnHover(output_button, "#D9F2FF", "white", True)
 
 barcodeLabel = tk.Label(window, text="Sample Sheet (CSV)",font=('Verdana',14),bg="white")
 barcodeLabel.place(x=30, y=480)
@@ -305,7 +341,7 @@ barcodePath.bind("<Return>",func=lambda e: read_samplesheet_file(button=False))
 #Browse button for sample sheet file path
 barcode_button = tk.Button(window,text='...',bg="white",command=lambda:read_samplesheet_file(button=True))
 barcode_button.place(x=740, y=520, width = 30, height = 30)
-changeOnHover(barcode_button, "#D9F2FF", "white", True)
+#changeOnHover(barcode_button, "#D9F2FF", "white", True)
 
 threadLabel = tk.Label(window, text="Threads",font=('Verdana',14),bg="white")
 threadLabel.place(x=30, y=580)
@@ -324,18 +360,18 @@ nanopolishButton = tk.Radiobutton(window, text="", variable=pipelineVar, value=1
 nanopolishButton.place(x=40, y=720)
 
 nanopolishLabel = tk.Label(window, text="Nanopolish",font=('Verdana',14),bg="white")
-nanopolishLabel.place(x=60, y=720)
+nanopolishLabel.place(x=70, y=720)
 
 medakaButton = tk.Radiobutton(window, text="", variable=pipelineVar, value=2, font=('Verdana',14), bg="white", fg="#2696FF")
-medakaButton.place(x=200, y=720)
+medakaButton.place(x=210, y=720)
 
 medakaLabel = tk.Label(window, text="Medaka",font=('Verdana',14),bg="white")
-medakaLabel.place(x=220, y=720)
+medakaLabel.place(x=240, y=720)
 
 # Run button
 run_button = tk.Button(window,text='Run',font=('Verdana',14),command=lambda:threading.Thread(target=run).start(),bg="white")
 run_button.place(x=600, y=750, width = 100, height = 50)
-changeOnHover(run_button, "#D9F2FF", "white", True)
+#changeOnHover(run_button, "#D9F2FF", "white", True)
 
 
 # Status bar
