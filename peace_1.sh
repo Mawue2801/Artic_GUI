@@ -22,7 +22,7 @@ primerSchemes="/home/ngs/fieldbioinformatics/primer-schemes"
 primerScheme="nCoV-2019/V1200"
 prefix="NC"
 barcode="12"
-threads=5
+threads=10
 #downloadCmd="wget http://artic.s3.climb.ac.uk/run-folders/EBOV_Amplicons_flongle.tar.gz"
 #extractCmd="tar -vxzf EBOV_Amplicons_flongle.tar.gz"
 

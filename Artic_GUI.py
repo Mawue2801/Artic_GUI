@@ -1,8 +1,8 @@
 #Import python libraries
 import tkinter as tk
-from tkinter import *
-from tkinter import filedialog
 from tkinter import ttk
+from tkinter import filedialog
+from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
 import pandas as pd
@@ -23,17 +23,20 @@ height = 850
 window.geometry(f"{width}x{height}")
 window.resizable(False,False)
 
-icon = PhotoImage(file = 'Icon.png')
+icon = tk.PhotoImage(file = 'Icon.png')
  
 # Setting window icon
 window.iconphoto(False, icon)
 
-window.configure(bg='white')
+style= ttk.Style()
+style.theme_use('clam')
+style.configure("TCombobox", fieldbackground= "white", background= "white")
 
 #Open File Explorer to select input folder path
 def input_data(button):
     global input_data_directory
     global filenames
+    global endoflist
     if button == True:
         input_data_directory = filedialog.askdirectory(parent=window,title='Select a folder')
         inputDataPath.delete(0,tk.END)
@@ -43,14 +46,30 @@ def input_data(button):
         input_data_directory = inputDataPath.get()
     filenames = os.listdir(input_data_directory)
     filename_selection.delete(0,tk.END)
+    i = 1
     for val in filenames:
-        filename_selection.insert(tk.END, val)
+        filename_selection.insert(tk.END, f"{i} - {val}")
+        i += 1
+        endoflist = i
+    minCombobox["values"] = list(range(1,i-1))
 
+def showmaxVals(event):
+    maxCombobox["values"] = list(range(int(minCombobox.get())+1,endoflist))
+
+#Select all folders in the input folder
 def select_all():
-    filename_selection.select_set(0, END)
+    filename_selection.select_set(0, tk.END)
 
+#Deselect all folders in the input folder
 def deselect_all():
-    filename_selection.selection_clear(0, END)
+    filename_selection.selection_clear(0, tk.END)
+
+#Select folders based on their index in the listbox
+def select():
+    try:
+        filename_selection.select_set(int(minCombobox.get())-1, int(maxCombobox.get())-1)
+    except:
+        messagebox.showwarning("Warning", "Missing Parameter")
 
 #Open File Explorer to select output folder path
 def output_data(button):
@@ -107,16 +126,29 @@ def run():
     new_filenames=[]
     selected = filename_selection.curselection()
     for idx in range(len(filenames)):
-        if idx not in selected:
-            new_filenames.append(filename_selection.get(idx))
+        if idx in selected:
+            new_filenames.append(filename_selection.get(idx).split(" - ")[1])
 
     i = 1
+    tmp_file_list = []
     final_file_list = []
 
     #Confirm that barcode is in the name of all folders to be run
     for filename in new_filenames:
         if 'barcode' in filename:
+            tmp_file_list.append(filename)
+
+    for filename in tmp_file_list:
+        tmp = re.findall(r'\d+', filename)
+        res = list(map(int, tmp))
+        num = ''
+        for i in res:
+            num += str(i)
+        num = int(num)
+        if num in prefix_dict.keys():
             final_file_list.append(filename)
+        elif num not in prefix_dict.keys():
+            messagebox.showwarning("Warning", f"Sample ID for {filename} not found. It would be removed from the list of processed folders.")
 
     for filename in final_file_list:
         inputDirectory = os.path.join(input_data_directory,filename)
@@ -124,16 +156,16 @@ def run():
         outputDirectory = os.path.join(output_data_directory,filename)
         outputDirectory = outputDirectory.replace('\\','/')
 
-        #Find digits in filename and read corresponding ID from sample sheet dictionary  
+        #Find digits in filename
         tmp = re.findall(r'\d+', filename)
         res = list(map(int, tmp))
         num = ''
-        for i in res:
-            num += str(i)
+        for j in res:
+            num += str(j)
         num = int(num)
         prefix = prefix_dict[num]['sample']
 
-        statusTmp = f"Processing Folder {i} of {len(final_file_list)}..."  
+        statusTmp = f"Processing Folder {i} of {len(final_file_list)}"  
         statusText.set(statusTmp)
 
         subprocess.run(["./peace_1.sh",pipeline,inputDirectory,outputDirectory,prefix,inputDirectory[-2:]])
@@ -177,6 +209,9 @@ def light_mode():
     Imagelabel["bg"] = "white"
     inputLabel["bg"] = "white"
     filenameselectionLabel["bg"] = "white"
+    rangeLabel["bg"] = "white"
+    minLabel["bg"] = "white"
+    maxLabel["bg"] = "white"
     outputLabel["bg"] = "white"
     barcodeLabel["bg"] = "white"
     threadLabel["bg"] = "white"
@@ -191,12 +226,14 @@ def light_mode():
     barcodePath["bg"], barcodePath["fg"] = "white", "black"
     thread_entry["bg"], thread_entry["fg"] ="white", "black"
     input_button["bg"],input_button["fg"] = "white", "black"
-    select_button["bg"],select_button["fg"] = "white", "black"
+    selectall_button["bg"],selectall_button["fg"] = "white", "black"
     deselect_button["bg"],deselect_button["fg"] = "white", "black"
+    select_button["bg"],select_button["fg"] = "white", "black"
     output_button["bg"],output_button["fg"] = "white", "black"
     barcode_button["bg"],barcode_button["fg"] = "white", "black"
     run_button["bg"],run_button["fg"] = "white", "black"
     statusbar["bg"],statusbar["fg"] = "white", "black"
+    style.configure("TCombobox", fieldbackground= "white", background= "white")
 
 def dark_mode():
     backgroundLabel["bg"] = "#404040"
@@ -204,6 +241,9 @@ def dark_mode():
     Imagelabel["bg"] = "#404040"
     inputLabel["bg"] = "#404040"
     filenameselectionLabel["bg"] = "#404040"
+    rangeLabel["bg"] = "#404040"
+    minLabel["bg"] = "#404040"
+    maxLabel["bg"] = "#404040"
     outputLabel["bg"] = "#404040"
     barcodeLabel["bg"] = "#404040"
     threadLabel["bg"] = "#404040"
@@ -218,16 +258,28 @@ def dark_mode():
     barcodePath["bg"], barcodePath["fg"] = "#3B3B3B", "white"
     thread_entry["bg"], thread_entry["fg"] = "#3B3B3B", "white"
     input_button["bg"],input_button["fg"] = "#3B3B3B", "white"
-    select_button["bg"],select_button["fg"] = "#3B3B3B", "white"
+    selectall_button["bg"],selectall_button["fg"] = "#3B3B3B", "white"
     deselect_button["bg"],deselect_button["fg"] = "#3B3B3B", "white"
+    select_button["bg"],select_button["fg"] = "#3B3B3B", "white"
     output_button["bg"],output_button["fg"] = "#3B3B3B", "white"
     barcode_button["bg"],barcode_button["fg"] = "#3B3B3B", "white"
     run_button["bg"],run_button["fg"] = "#3B3B3B", "white"
     statusbar["bg"],statusbar["fg"] = "#3B3B3B", "white"
+    style.configure("TCombobox", fieldbackground= "#3B3B3B", background= "#3B3B3B")
 
 def open_help():
-    subprocess.Popen(["notepad.exe", "README.md"])
-    
+    with open("README.md","r") as f:
+        data = f.readlines()
+    helpWindow = tk.Toplevel(window)
+    helpWindow.title("User Manual")
+    helpWindow.geometry("800x510")
+    helpWindow.configure(bg="white")
+    helpWindow.iconphoto(False, icon)
+    helpWindow.resizable(False,False)
+    data.remove('\n')
+    for datum in data:
+        datum = datum[0:-1]
+        tk.Label(helpWindow,text=datum,bg="white").pack(anchor="w")
     
 menubar = tk.Menu(window)
 
@@ -266,7 +318,7 @@ lightbackgroundImage = tk.PhotoImage(file = "LightBackground.png")
 darkbackgroundImage = tk.PhotoImage(file = "DarkBackground.png")
   
 # Set background image
-backgroundLabel = Label(window, image = lightbackgroundImage)
+backgroundLabel = tk.Label(window, image = lightbackgroundImage)
 backgroundLabel.place(x = 0, y = 0)
 
 # Insert image in window
@@ -292,14 +344,14 @@ input_button = tk.Button(window,text='...',bg="white",command=lambda:input_data(
 input_button.place(x=740, y=200,width = 30, height = 30)
 #changeOnHover(input_button, "#D9F2FF", "white", True)
 
-filenameselectionLabel = tk.Label(window, text="Select Folders to Remove from List",font=('Verdana',14),bg="white")
-filenameselectionLabel.place(x=30, y=260) 
+filenameselectionLabel = tk.Label(window, text="Select Folders to Process",font=('Verdana',14),bg="white")
+filenameselectionLabel.place(x=30, y=250) 
 
 listboxFrame = tk.Frame(window,bg="white")
-listboxFrame.place(x=380,y=260)
+listboxFrame.place(x=360,y=290)
 
-scrollbar = Scrollbar(listboxFrame)
-scrollbar.pack(side = RIGHT, fill = BOTH)
+scrollbar = tk.Scrollbar(listboxFrame)
+scrollbar.pack(side = tk.RIGHT, fill = tk.BOTH)
 
 #Listbox for selection of folders to remove from list of folders to be processed
 filename_selection = tk.Listbox(listboxFrame, selectmode=tk.MULTIPLE, height=4,width=29,font=('Verdana',14),highlightcolor="#2696FF",selectbackground="#2696FF", yscrollcommand = scrollbar.set)
@@ -307,48 +359,70 @@ filename_selection.pack()
 
 scrollbar.config(command = filename_selection.yview)
 
-select_button = tk.Button(window, text='Select All', font=('Verdana',12), bg="white", command=lambda:select_all())
-select_button.place(x=30,y=310)
-#changeOnHover(select_button, "#D9F2FF", "white", True)
+selectall_button = tk.Button(window, text='Select All', width = 13, font=('Verdana',12), bg="white", command=lambda:select_all())
+selectall_button.place(x=30,y=290)
+#changeOnHover(selectall_button, "#D9F2FF", "white", True)
 
-deselect_button = tk.Button(window, text='Deselect All', font=('Verdana',12), bg="white", command=lambda:deselect_all())
-deselect_button.place(x=150,y=310)
+deselect_button = tk.Button(window, text='Deselect All', width = 13,font=('Verdana',12), bg="white", command=lambda:deselect_all())
+deselect_button.place(x=190,y=290)
 #changeOnHover(deselect_button, "#D9F2FF", "white", True)
 
+rangeLabel = tk.Label(window, text="Range",font=('Verdana',13),bg="white")
+rangeLabel.place(x=30, y=330)
+
+minLabel = tk.Label(window, text="Min",font=('Verdana',12),bg="white")
+minLabel.place(x=30, y=365)
+
+minVal = tk.StringVar()
+minCombobox = ttk.Combobox(window, width = 5, textvariable = minVal, state="readonly")
+minCombobox.place(x=70,y=365)
+minCombobox.bind("<<ComboboxSelected>>", showmaxVals)
+
+maxLabel = tk.Label(window, text="Max",font=('Verdana',12),bg="white")
+maxLabel.place(x=140, y=365)
+
+maxVal = tk.StringVar()
+maxCombobox = ttk.Combobox(window, width = 5, textvariable = maxVal, state="readonly")
+maxCombobox.place(x=180,y=365)
+
+select_button = tk.Button(window, text='Select', width = 7, font=('Verdana',12), bg="white", command=lambda:select())
+select_button.place(x=250,y=360)
+#changeOnHover(select_button, "#D9F2FF", "white", True)
+
 outputLabel = tk.Label(window, text="Output Data Path",font=('Verdana',14),bg="white")
-outputLabel.place(x=30, y=380)
+outputLabel.place(x=30, y=410)
 
 #Entry box for output folder path
 outputDataPath = tk.Entry(highlightthickness=2,borderwidth=0,highlightcolor= "#2696FF",highlightbackground="#D1D1D1",font=('Verdana',14))
-outputDataPath.place(x=30, y=420, width=700, height=30)
+outputDataPath.place(x=30, y=450, width=700, height=30)
 changeOnHover(outputDataPath, "#696A6B", "#D1D1D1", False)
 outputDataPath.bind("<Return>",func=lambda e: output_data(button=False))
 
 #Browse button for output folder path
 output_button = tk.Button(window,text='...',bg="white",command=lambda:output_data(button=True))
-output_button.place(x=740, y=420, width = 30, height = 30)
+output_button.place(x=740, y=450, width = 30, height = 30)
 #changeOnHover(output_button, "#D9F2FF", "white", True)
 
 barcodeLabel = tk.Label(window, text="Sample Sheet (CSV)",font=('Verdana',14),bg="white")
-barcodeLabel.place(x=30, y=480)
+barcodeLabel.place(x=30, y=500)
 
 #Entry box for sample sheet file path
 barcodePath = tk.Entry(highlightthickness=2,borderwidth=0,highlightcolor= "#2696FF",highlightbackground="#D1D1D1",font=('Verdana',14))
-barcodePath.place(x=30, y=520, width=700, height=30)
+barcodePath.place(x=30, y=540, width=700, height=30)
 changeOnHover(barcodePath, "#696A6B", "#D1D1D1", False)
 barcodePath.bind("<Return>",func=lambda e: read_samplesheet_file(button=False))
 
 #Browse button for sample sheet file path
 barcode_button = tk.Button(window,text='...',bg="white",command=lambda:read_samplesheet_file(button=True))
-barcode_button.place(x=740, y=520, width = 30, height = 30)
+barcode_button.place(x=740, y=540, width = 30, height = 30)
 #changeOnHover(barcode_button, "#D9F2FF", "white", True)
 
 threadLabel = tk.Label(window, text="Threads",font=('Verdana',14),bg="white")
-threadLabel.place(x=30, y=580)
+threadLabel.place(x=30, y=590)
 
 #Entry box for number of threads
 thread_entry = tk.Entry(highlightthickness=2,borderwidth=0,highlightcolor= "#2696FF",highlightbackground="#D1D1D1",font=('Verdana',14))
-thread_entry.place(x=30, y=620,width=700, height=30)
+thread_entry.place(x=30, y=630,width=700, height=30)
 changeOnHover(thread_entry, "#696A6B", "#D1D1D1", False)
 
 pipelineLabel = tk.Label(window, text="Pipeline",font=('Verdana',14),bg="white")
@@ -372,7 +446,6 @@ medakaLabel.place(x=240, y=720)
 run_button = tk.Button(window,text='Run',font=('Verdana',14),command=lambda:threading.Thread(target=run).start(),bg="white")
 run_button.place(x=600, y=750, width = 100, height = 50)
 #changeOnHover(run_button, "#D9F2FF", "white", True)
-
 
 # Status bar
 statusText = tk.StringVar()

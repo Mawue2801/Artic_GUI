@@ -12,7 +12,9 @@ Enter the folder and samplesheet paths in the entry boxes provided or click on t
 
 You could also click on File and on Select Data Path to open up the file explorer.
 
-You have the option to deselect files you don't want to run in the list box provided. Scroll down or use the arrow keys to view the entire list.
+Select folders you want to run in the listbox provided. Scroll down or use the arrow keys to view the entire list.
+
+You can select the folders you want by entering the minimum and maximum values of the position of the folders in the list and click the Select Button.
 
 Click on run when done selecting all your parameters.
 
